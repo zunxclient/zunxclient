@@ -1,0 +1,13 @@
+{
+  "name": "Zunx Client",
+  "tagline": "A free Minecraft launcher for every version, from 1.8 to the newest. Add mods, shaders and skins in a few clicks.",
+  "contact": "zunvexaa@gmail.com",
+  "port": 8080,
+  "githubRepo": "PDDDev/zunx",
+  "adsenseClient": "ca-pub-6838349425657998",
+  "adsenseSlots": {
+    "top": "",
+    "middle": "",
+    "bottom": ""
+  }
+}
