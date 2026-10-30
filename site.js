@@ -1,47 +1,39 @@
-/* Zunx advertising: place each supplied format where it fits best. */
+/* Zunx advertising: banner/iframe + native + social bar. Popunder and Smartlink are intentionally excluded. */
 (function () {
   "use strict";
 
-  const ADS = {
-    side:   {key:"e8535a3762a367ddf579a10c2a4bfa79", w:160, h:600},
-    sideSmall:{key:"1cb608172de4d558f60a99d79013ff02", w:160, h:300},
-    box:    {key:"41bcbf3791e3ef47f818ee34ffa0a4e9", w:300, h:250},
-    mobile: {key:"b9f243ac21adf91a9f0ea42b65cbe416", w:320, h:50},
-    banner: {key:"683dd6f34417c90b35d447d0b280f77a", w:468, h:60},
-    wide:   {key:"70456101fe259f5168ea1e8b236e3dec", w:728, h:90}
-  };
+  const ADS = [
+    {name:"160x300", key:"1cb608172de4d558f60a99d79013ff02", w:160, h:300},
+    {name:"160x600", key:"e8535a3762a367ddf579a10c2a4bfa79", w:160, h:600},
+    {name:"300x250", key:"41bcbf3791e3ef47f818ee34ffa0a4e9", w:300, h:250},
+    {name:"320x50", key:"b9f243ac21adf91a9f0ea42b65cbe416", w:320, h:50},
+    {name:"468x60", key:"683dd6f34417c90b35d447d0b280f77a", w:468, h:60},
+    {name:"728x90", key:"70456101fe259f5168ea1e8b236e3dec", w:728, h:90}
+  ];
 
   function style() {
     if (document.getElementById("zunx-ads-style")) return;
     const s = document.createElement("style");
     s.id = "zunx-ads-style";
     s.textContent = `
-      .zunx-ad-slot{display:flex;justify-content:center;align-items:center;overflow:hidden;margin:18px auto;min-height:0}
-      .zunx-ad-slot iframe{display:block;max-width:100%}
-      .zunx-top-ad{width:min(728px,100%);min-height:90px;margin:20px auto 28px}
-      .zunx-middle-ad{width:300px;min-height:250px;margin:28px auto}
-      .zunx-bottom-ad{width:min(468px,100%);min-height:60px;margin:30px auto}
-      .zunx-mobile-ad{display:none}
-      .zunx-side-ad{position:fixed;top:50%;transform:translateY(-50%);z-index:15;width:160px;min-height:300px;pointer-events:auto}
-      .zunx-side-ad.left{left:8px}
-      .zunx-side-ad.right{right:8px}
-      .zunx-side-ad.small{min-height:300px}
-      .zunx-side-ad.tall{min-height:600px}
-      .zunx-native-ad{width:100%;max-width:728px;margin:24px auto;text-align:center}
-      @media(max-width:1250px){.zunx-side-ad{display:none!important}}
-      @media(max-width:700px){
-        .zunx-top-ad{display:none!important}
-        .zunx-mobile-ad{display:flex;width:min(320px,100%);min-height:50px}
-        .zunx-bottom-ad{width:min(468px,100%);min-height:60px}
-      }
+      .zunx-ad-slot { display:flex; justify-content:center; align-items:center; overflow:hidden; margin:14px auto; min-height:0; }
+      .zunx-top-ad-row { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:14px; margin:16px auto 24px; width:100%; }
+      .zunx-top-ad-row .zunx-ad-slot { margin:0; }
+      .zunx-side-ad { position:fixed; top:50%; transform:translateY(-50%); z-index:50; width:160px; background:transparent; border:0; }
+      .zunx-side-ad.left { left:4px; }
+      .zunx-side-ad.right { right:4px; }
+      .zunx-side-ad iframe { display:block; }
+      .zunx-native-ad { width:100%; max-width:728px; margin:18px auto; text-align:center; }
+      @media(max-width:1200px){ .zunx-side-ad{display:none!important;} }
+      @media(max-width:700px){ .zunx-top-ad-row{gap:8px;} }
     `;
     document.head.appendChild(s);
   }
 
-  function banner(slot, ad, extraClass="") {
+  function banner(slot, ad) {
     slot.innerHTML = "";
-    slot.className = "zunx-ad-slot " + extraClass;
-    slot.style.width = Math.min(ad.w, window.innerWidth - 16) + "px";
+    slot.className = "zunx-ad-slot";
+    slot.style.width = ad.w + "px";
     slot.style.minHeight = ad.h + "px";
 
     const script = document.createElement("script");
@@ -57,46 +49,84 @@
     const loader = document.createElement("script");
     loader.async = true;
     loader.src = "https://bellnewyork.org/22/" + ad.key;
-    slot.append(script, loader);
+    slot.appendChild(script);
+    slot.appendChild(loader);
   }
 
-  function placeExisting() {
-    const boxes = [...document.querySelectorAll(".ad")];
-    boxes.forEach(box => {
-      const pos = (box.dataset.pos || "").toLowerCase();
-      box.classList.remove("zunx-ad-slot");
+  function nativeAd(parent) {
+    const wrap = document.createElement("div");
+    wrap.className = "zunx-native-ad";
+    const script = document.createElement("script");
+    script.async = true;
+    script.setAttribute("data-cfasync","false");
+    script.src = "https://bellnewyork.org/21/5225e45e87ed1937698b62df85aac61a";
+    const box = document.createElement("div");
+    box.id = "container-5225e45e87ed1937698b62df85aac61a-" + Math.random().toString(36).slice(2);
+    wrap.append(script, box);
+    parent.appendChild(wrap);
+  }
 
-      if (pos === "left" || pos === "right") {
-        box.classList.add("zunx-side-ad", pos, "tall");
-        banner(box, ADS.side, "zunx-side-ad " + pos + " tall");
-      } else if (pos === "top") {
-        banner(box, ADS.wide, "zunx-top-ad");
-      } else if (pos === "middle") {
-        banner(box, ADS.box, "zunx-middle-ad");
-      } else if (pos === "bottom") {
-        banner(box, ADS.banner, "zunx-bottom-ad");
-      }
-    });
+  function socialBar() {
+    if (document.getElementById("zunx-socialbar-loader")) return;
+    const s = document.createElement("script");
+    s.id = "zunx-socialbar-loader";
+    s.async = true;
+    s.setAttribute("data-cfasync","false");
+    s.src = "https://bellnewyork.org/14/ef0aea3bf3300a8d488bd8d5740f7524";
+    document.body.appendChild(s);
+  }
 
-    // Add a compact mobile ad in the first content area; side ads are hidden on mobile.
-    if (!document.querySelector(".zunx-mobile-ad")) {
-      const mobile = document.createElement("div");
-      banner(mobile, ADS.mobile, "zunx-mobile-ad");
-      const main = document.querySelector("main") || document.querySelector(".page");
-      if (main) main.insertBefore(mobile, main.firstElementChild);
+  function makeAds() {
+    style();
+
+    // Preserve any existing site ad containers, but populate them with real supplied formats.
+    const existing = [...document.querySelectorAll(".ad")];
+    const left = existing.find(x => /left/i.test(x.dataset.pos || ""));
+    const right = existing.find(x => /right/i.test(x.dataset.pos || ""));
+
+    if (left) { left.classList.add("zunx-side-ad","left"); banner(left, ADS[0]); }
+    if (right) { right.classList.add("zunx-side-ad","right"); banner(right, ADS[1]); }
+
+    if (!document.getElementById("zunx-top-ad-row")) {
+      const row = document.createElement("div");
+      row.id = "zunx-top-ad-row";
+      row.className = "zunx-top-ad-row";
+      const a = document.createElement("div");
+      const b = document.createElement("div");
+      banner(a, ADS[2]);
+      banner(b, ADS[3]);
+      row.append(a,b);
+
+      const main = document.querySelector("main");
+      const target = [...document.querySelectorAll("section,article,h1,h2,h3")].find(e =>
+        /first game|built[- ]in tool|your first game/i.test(e.textContent || "")
+      );
+      if (target) (target.closest("section,article") || target).after(row);
+      else if (main) main.prepend(row);
+      else document.body.prepend(row);
     }
+
+    // Add larger banner/native placements without breaking page structure.
+    if (!document.getElementById("zunx-extra-ads")) {
+      const wrap = document.createElement("div");
+      wrap.id = "zunx-extra-ads";
+      const a = document.createElement("div");
+      const b = document.createElement("div");
+      banner(a, ADS[4]);
+      banner(b, ADS[5]);
+      wrap.append(a,b);
+      const main = document.querySelector("main") || document.body;
+      main.appendChild(wrap);
+      nativeAd(main);
+    }
+
+    socialBar();
   }
 
   function run() {
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => {
-        style();
-        placeExisting();
-      }, {once:true});
-    } else {
-      style();
-      placeExisting();
-    }
+      document.addEventListener("DOMContentLoaded", makeAds, {once:true});
+    } else makeAds();
   }
   run();
 })();
