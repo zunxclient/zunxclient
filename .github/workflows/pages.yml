@@ -1,0 +1,111 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fix Open Graph/Twitter metadata for EVERY HTML page automatically.
+      # This means Facebook, Discord, Messenger, etc. get the GitHub Pages
+      # preview instead of the old Netlify URL.
+      - name: Fix social embed metadata
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          BASE = "https://zunxclient.github.io/zunxclient"
+          IMAGE = f"{BASE}/og-image.png"
+
+          for path in Path(".").rglob("*.html"):
+              if ".git" in path.parts:
+                  continue
+
+              text = path.read_text(encoding="utf-8")
+
+              # Convert old Netlify URLs wherever they appear.
+              text = re.sub(
+                  r"https://zunxclient\.netlify\.app",
+                  BASE,
+                  text
+              )
+
+              # Build the real public URL for this HTML file.
+              rel = path.as_posix()
+              if rel == "index.html":
+                  page_url = BASE + "/"
+              else:
+                  page_url = BASE + "/" + rel
+
+              # Fix/add the canonical Open Graph URL.
+              og_url = f'<meta property="og:url" content="{page_url}">'
+              if re.search(r'<meta\s+property=["\']og:url["\']', text, re.I):
+                  text = re.sub(
+                      r'<meta\s+property=["\']og:url["\'][^>]*>',
+                      og_url,
+                      text,
+                      count=1,
+                      flags=re.I
+                  )
+              else:
+                  text = text.replace("</head>", f"  {og_url}\n</head>", 1)
+
+              # Fix/add the Open Graph image.
+              og_image = f'<meta property="og:image" content="{IMAGE}">'
+              if re.search(r'<meta\s+property=["\']og:image["\']', text, re.I):
+                  text = re.sub(
+                      r'<meta\s+property=["\']og:image["\'][^>]*>',
+                      og_image,
+                      text,
+                      count=1,
+                      flags=re.I
+                  )
+              else:
+                  text = text.replace("</head>", f"  {og_image}\n</head>", 1)
+
+              # Make sure large-preview cards are requested where supported.
+              twitter_card = '<meta name="twitter:card" content="summary_large_image">'
+              if not re.search(r'<meta\s+name=["\']twitter:card["\']', text, re.I):
+                  text = text.replace("</head>", f"  {twitter_card}\n</head>", 1)
+
+              twitter_image = f'<meta name="twitter:image" content="{IMAGE}">'
+              if re.search(r'<meta\s+name=["\']twitter:image["\']', text, re.I):
+                  text = re.sub(
+                      r'<meta\s+name=["\']twitter:image["\'][^>]*>',
+                      twitter_image,
+                      text,
+                      count=1,
+                      flags=re.I
+                  )
+              else:
+                  text = text.replace("</head>", f"  {twitter_image}\n</head>", 1)
+
+              path.write_text(text, encoding="utf-8")
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: d
+        uses: actions/deploy-pages@v4
