@@ -72,21 +72,26 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const size = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
-window.zunxReady.then(CFG => {
-  return zunxGetJSON('api/versions').catch(() => zunxGetJSON('https://api.github.com/repos/' + CFG.githubRepo + '/releases?per_page=100').then(rel => {
-    const out = [];
-    for (const r of rel) for (const a of r.assets || []) {
-      if (/\.(exe|dmg|AppImage|deb|zip)$/i.test(a.name)) {
-        const m = a.name.match(/(\d+\.\d+\.\d+)/);
-        out.push({ name: a.name, version: m ? m[1] : (r.tag_name || '').replace(/^v/, ''), size: a.size, date: a.published_at || r.published_at, url: a.browser_download_url });
-      }
+const REPO_URL = 'https://github.com/zunxclient/zunx/releases';
+// Used only if the GitHub API cannot be reached (rate limit, blocked, offline).
+const FALLBACK = [{ name: 'Zunx-Client-Setup-1.0.1.exe', version: '1.0.1', size: 61102269, date: '2025-11-08T00:00:00Z', latest: true,
+  url: 'https://github.com/zunxclient/zunx/releases/download/v1.0.1/Zunx-Client-Setup-1.0.1.exe' }];
+const fromGithub = repo => zunxGetJSON('https://api.github.com/repos/' + repo + '/releases?per_page=100').then(rel => {
+  const out = [];
+  for (const r of rel) for (const a of r.assets || []) {
+    if (/\.(exe|dmg|AppImage|deb|zip)$/i.test(a.name)) {
+      const m = a.name.match(/(\d+\.\d+\.\d+)/);
+      out.push({ name: a.name, version: m ? m[1] : (r.tag_name || '').replace(/^v/, ''), size: a.size, date: a.published_at || r.published_at, url: a.browser_download_url });
     }
-    const k = v => (v || '0.0.0').split('.').map(Number);
-    out.sort((x, y) => { const a = k(x.version), b = k(y.version); for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return b[i] - a[i]; return 0; });
-    if (out[0]) out[0].latest = true;
-    return out;
-  }));
-}).then(list => {
+  }
+  const k = v => (v || '0.0.0').split('.').map(Number);
+  out.sort((x, y) => { const a = k(x.version), b = k(y.version); for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return b[i] - a[i]; return 0; });
+  if (out[0]) out[0].latest = true;
+  if (!out.length) throw 0;
+  return out;
+});
+window.zunxReady.then(CFG => fromGithub(CFG.githubRepo || 'zunxclient/zunx')).catch(() => FALLBACK)
+.then(list => {
   const box = $('list');
   if (!list.length) { box.innerHTML = '<div class="empty">The download is not ready yet. Please check back soon.</div>'; return; }
   box.innerHTML = list.map((f, i) => `
@@ -96,6 +101,6 @@ window.zunxReady.then(CFG => {
       <a class="btn sm ${f.latest ? '' : 'ghost'}" href="${f.url || '/download/' + encodeURIComponent(f.name)}" download>Download</a>
     </div>`).join('');
   box.querySelectorAll('.rv').forEach(el => requestAnimationFrame(() => el.classList.add('in')));
-}).catch(() => { $('list').innerHTML = '<div class="empty">Could not load the download right now. Please try again later.</div>'; });
+}).catch(() => { $('list').innerHTML = '<div class="empty">Could not load the download right now. <a href="'+REPO_URL+'" target="_blank" rel="noopener noreferrer">Get it from GitHub releases</a>.</div>'; });
 </script>
 </body></html>

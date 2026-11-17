@@ -263,9 +263,7 @@ footer a{color:var(--a)}
 .soc{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--text)!important;font-weight:600;font-size:14px;transition:transform .15s,border-color .2s,box-shadow .2s,background .2s}
 .soc svg{width:18px;height:18px;fill:currentColor;flex:none}
 .soc:hover{transform:translateY(-2px);box-shadow:0 8px 22px var(--hover)}
-.soc.discord:hover{border-color:#5865f2}.soc.discord svg{color:#5865f2}
-.soc.youtube:hover{border-color:#ff0000}.soc.youtube svg{color:#ff0000}
-.soc.facebook:hover{border-color:#1877f2}.soc.facebook svg{color:#1877f2}
+.soc svg{color:var(--mute)}.soc:hover svg{color:var(--text)}.soc:hover{border-color:var(--mute)}
 
 /* ---------- scroll reveal ---------- */
 .rv{opacity:0;transform:translateY(24px) scale(.985);transition:opacity .65s ease,transform .65s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .25s}
