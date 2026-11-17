@@ -21,7 +21,6 @@
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script src="site.js"></script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6838349425657998" crossorigin="anonymous"></script>
 </head>
 <body>
 <header><div class="wrap">
@@ -72,6 +71,12 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const size = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+const SMARTLINK = 'https://ardance.org/4/4dab4e25b6439994189eed3a5bdda81f';
+// Clicking Download: the file download starts as normal AND the smartlink opens in a new tab.
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('#list a[download]');
+  if (a) window.open(SMARTLINK, '_blank', 'noopener');
+});
 const REPO_URL = 'https://github.com/zunxclient/zunx/releases';
 // Used only if the GitHub API cannot be reached (rate limit, blocked, offline).
 const FALLBACK = [{ name: 'Zunx-Client-Setup-1.0.1.exe', version: '1.0.1', size: 61102269, date: '2025-11-08T00:00:00Z', latest: true,
